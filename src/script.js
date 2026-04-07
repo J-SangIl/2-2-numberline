@@ -13,7 +13,7 @@ const defenseControls = document.getElementById('defense-controls');
 const sniperControls = document.getElementById('sniper-controls');
 const answerInput = document.getElementById('answer-input');
 const sniperAlert = document.getElementById('sniper-alert');
-const targetCoordEl = document.getElementById('target-coord');
+const targetCoordContainer = document.getElementById('target-coord-container');
 const globalTimerContainer = document.getElementById('global-timer-container');
 const globalTimerBar = document.getElementById('global-timer-bar');
 const overlay = document.getElementById('overlay');
@@ -23,6 +23,7 @@ const finalScoreEl = document.getElementById('final-score');
 const startBtn = document.getElementById('start-btn');
 const restartBtn = document.getElementById('restart-btn');
 const gameContainer = document.getElementById('game-container');
+const gameOverModeInfo = document.getElementById('game-over-mode-info');
 
 const startTitle = document.getElementById('start-title');
 const startDesc = document.getElementById('start-desc');
@@ -68,7 +69,8 @@ const NUMBER_LINE = {
     max: 10,
     step: 1,
     subStep: 0.5,
-    y: 0 
+    y: 0,
+    padding: 50
 };
 
 // Initialize
@@ -179,6 +181,14 @@ function gameOver() {
     gameState.isGameOver = true;
     gameState.isStarted = false;
     finalScoreEl.textContent = gameState.score;
+    
+    if (gameState.mode === 'defense') {
+        gameOverModeInfo.textContent = '[ 아케이드 디펜스 ]';
+    } else {
+        const diffText = gameState.sniperDifficulty === 'easy' ? '쉬움' : '보통';
+        gameOverModeInfo.textContent = `[ 블라인드 스나이퍼 - ${diffText} ]`;
+    }
+
     overlay.classList.remove('hidden');
     startScreen.classList.add('hidden');
     gameOverScreen.classList.remove('hidden');
@@ -198,12 +208,14 @@ function shakeScreen() {
 function valToX(val) {
     const range = NUMBER_LINE.max - NUMBER_LINE.min;
     const percent = (val - NUMBER_LINE.min) / range;
-    return percent * canvas.width;
+    const availableWidth = canvas.width - (NUMBER_LINE.padding * 2);
+    return NUMBER_LINE.padding + (percent * availableWidth);
 }
 
 function xToVal(x) {
     const range = NUMBER_LINE.max - NUMBER_LINE.min;
-    const percent = x / canvas.width;
+    const availableWidth = canvas.width - (NUMBER_LINE.padding * 2);
+    const percent = (x - NUMBER_LINE.padding) / availableWidth;
     return NUMBER_LINE.min + percent * range;
 }
 
@@ -211,7 +223,15 @@ function xToVal(x) {
 function generateTarget() {
     const score = gameState.score;
     const isEasy = gameState.mode === 'sniper' && gameState.sniperDifficulty === 'easy';
-    let val, display;
+    let val, display, fraction;
+
+    if (gameState.mode === 'defense') {
+        // Always 0.5 units for defense mode (Integer or Integer.5)
+        val = (Math.floor(Math.random() * 41) - 20) * 0.5;
+        display = val > 0 ? `+${val}` : `${val}`;
+        if (val === 0) return generateTarget();
+        return { val, display };
+    }
 
     if (score < 50 || isEasy && score < 100) {
         // Integers only
@@ -241,11 +261,12 @@ function generateTarget() {
         } else {
             const sign = sNum >= 0 ? '+' : '-';
             display = `${sign}${Math.abs(sNum)}/${sDen}`;
+            fraction = { sign, num: Math.abs(sNum), den: sDen };
         }
     }
 
     if (val === 0 && score > 0) return generateTarget(); 
-    return { val, display };
+    return { val, display, fraction };
 }
 
 function spawnEnemy() {
@@ -267,13 +288,32 @@ function spawnEnemy() {
 function spawnSniperTarget() {
     if (gameState.mode !== 'sniper') return;
     
-    gameState.sniperTarget = generateTarget();
+    const target = generateTarget();
+    gameState.sniperTarget = target;
+    
     let baseTime = Math.max(1500, 6000 - gameState.difficulty * 500);
     if (gameState.sniperDifficulty === 'easy') baseTime += 2000;
     
+    // Add 2 seconds for fractions
+    if (target.fraction) {
+        baseTime += 2000;
+    }
+    
     gameState.sniperMaxTime = baseTime;
     gameState.sniperTimer = gameState.sniperMaxTime;
-    targetCoordEl.textContent = gameState.sniperTarget.display;
+    
+    // Render target display
+    if (target.fraction) {
+        targetCoordContainer.innerHTML = `
+            <span class="fraction-sign">${target.fraction.sign}</span>
+            <div class="fraction">
+                <span class="fraction-numerator">${target.fraction.num}</span>
+                <span class="fraction-denominator">${target.fraction.den}</span>
+            </div>
+        `;
+    } else {
+        targetCoordContainer.textContent = target.display;
+    }
 }
 
 function handleDefenseInput() {
@@ -385,9 +425,26 @@ function createExplosion(x, y, isSmall = false) {
 function drawNumberLine() {
     ctx.strokeStyle = '#adb5bd';
     ctx.lineWidth = 2;
+    
+    // Main line
     ctx.beginPath();
     ctx.moveTo(0, NUMBER_LINE.y);
     ctx.lineTo(canvas.width, NUMBER_LINE.y);
+    ctx.stroke();
+
+    // Arrows at both ends
+    const arrowSize = 10;
+    // Left arrow
+    ctx.beginPath();
+    ctx.moveTo(arrowSize, NUMBER_LINE.y - arrowSize/2);
+    ctx.lineTo(0, NUMBER_LINE.y);
+    ctx.lineTo(arrowSize, NUMBER_LINE.y + arrowSize/2);
+    ctx.stroke();
+    // Right arrow
+    ctx.beginPath();
+    ctx.moveTo(canvas.width - arrowSize, NUMBER_LINE.y - arrowSize/2);
+    ctx.lineTo(canvas.width, NUMBER_LINE.y);
+    ctx.lineTo(canvas.width - arrowSize, NUMBER_LINE.y + arrowSize/2);
     ctx.stroke();
 
     ctx.textAlign = 'center';
