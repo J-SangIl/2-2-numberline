@@ -29,6 +29,31 @@
                 <div id="global-timer-container" class="hidden">
                     <div id="global-timer-bar"></div>
                 </div>
+
+                <div id="overlay">
+                    <div id="start-screen">
+                        <h2 id="start-title">수직선 디펜스</h2>
+                        
+                        <div id="difficulty-selector" class="hidden">
+                            <p class="instruction">난이도 선택</p>
+                            <div class="difficulty-btns">
+                                <button id="btn-easy" class="diff-btn">쉬움</button>
+                                <button id="btn-normal" class="diff-btn active">보통</button>
+                            </div>
+                        </div>
+
+                        <div class="mode-select-info">
+                            <p id="mode-info-text"><strong>모드 1:</strong> 적의 위치를 숫자로 입력하세요.</p>
+                        </div>
+                        <button id="start-btn">게임 시작</button>
+                    </div>
+                    <div id="game-over-screen" class="hidden">
+                        <h2>GAME OVER</h2>
+                        <p id="game-over-mode-info"></p>
+                        <p>최종 점수: <span id="final-score">0</span></p>
+                        <button id="restart-btn">다시 시작</button>
+                    </div>
+                </div>
             </div>
         </main>
 
@@ -41,32 +66,6 @@
                     <p class="instruction">수직선 위의 해당 좌표를 마우스로 클릭하세요!</p>
                 </div>
             </div>
-
-        <div id="overlay">
-            <div id="start-screen">
-                <h2 id="start-title">수직선 디펜스</h2>
-                <p id="start-desc">중학교 1학년 정수와 유리수 학습 게임</p>
-                
-                <div id="difficulty-selector" class="hidden">
-                    <p class="instruction">난이도 선택</p>
-                    <div class="difficulty-btns">
-                        <button id="btn-easy" class="diff-btn">쉬움</button>
-                        <button id="btn-normal" class="diff-btn active">보통</button>
-                    </div>
-                </div>
-
-                <div class="mode-select-info">
-                    <p id="mode-info-text"><strong>모드 1:</strong> 적의 위치를 숫자로 입력하세요.</p>
-                </div>
-                <button id="start-btn">게임 시작</button>
-            </div>
-            <div id="game-over-screen" class="hidden">
-                <h2>GAME OVER</h2>
-                <p id="game-over-mode-info"></p>
-                <p>최종 점수: <span id="final-score">0</span></p>
-                <button id="restart-btn">다시 시작</button>
-            </div>
-        </div>
     </div>
     <script type="module" src="/src/script.js"></script>
 </body>
