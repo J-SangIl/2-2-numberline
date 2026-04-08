@@ -49,6 +49,8 @@ let gameState = {
     sniperTarget: { val: 0, display: '0' },
     sniperTimer: 0,
     sniperMaxTime: 5000,
+    isSniperTargetHit: false,
+    sniperMissCount: 0,
     animationFrameId: null
 };
 
@@ -290,6 +292,8 @@ function spawnSniperTarget() {
     
     const target = generateTarget();
     gameState.sniperTarget = target;
+    gameState.isSniperTargetHit = false;
+    gameState.sniperMissCount = 0;
     
     let baseTime = Math.max(1500, 6000 - gameState.difficulty * 500);
     if (gameState.sniperDifficulty === 'easy') baseTime += 2000;
@@ -356,7 +360,7 @@ function handleDefenseInput() {
 }
 
 function handleCanvasClick(e) {
-    if (gameState.mode !== 'sniper' || !gameState.isStarted || gameState.isGameOver) return;
+    if (gameState.mode !== 'sniper' || !gameState.isStarted || gameState.isGameOver || gameState.isSniperTargetHit) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -365,6 +369,7 @@ function handleCanvasClick(e) {
     const diff = Math.abs(clickedVal - targetVal);
 
     if (diff <= 0.3) {
+        gameState.isSniperTargetHit = true;
         const isPerfect = diff <= 0.1;
         fireProjectile(targetVal, () => {
             // Reveal enemy briefly before explosion
@@ -388,6 +393,17 @@ function handleCanvasClick(e) {
         fireProjectile(clickedVal, () => {
             createExplosion(valToX(clickedVal), NUMBER_LINE.y, true);
             shakeScreen();
+            
+            gameState.sniperMissCount++;
+            if (gameState.sniperMissCount >= 3) {
+                gameState.health--;
+                updateUI();
+                if (gameState.health <= 0) {
+                    gameOver();
+                } else {
+                    spawnSniperTarget();
+                }
+            }
         });
     }
 }
